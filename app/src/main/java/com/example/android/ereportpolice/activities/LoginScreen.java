@@ -2,6 +2,7 @@ package com.example.android.ereportpolice.activities;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -11,11 +12,12 @@ import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.example.android.ereportpolice.R;
-import com.example.android.ereportpolice.utils.Constants;
 import com.example.android.ereportpolice.utils.NetworkUtil;
+import com.example.android.ereportpolice.utils.Utils;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -41,21 +43,30 @@ public class LoginScreen extends AppCompatActivity {
     }
 
     public void sign_in(View view) {
-        String sign_in_url = Constants.SERVER_URL + "final_proj_api/public/log_user_in.php";
+        String sign_in_url = Utils.SERVER_URL + "final_proj_api/public/log_user_in.php";
         final String team_name = et_team_name.getText().toString();
         final String password = et_password.getText().toString();
         final String user_type = "patrol_team";
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, sign_in_url, null, new Response.Listener<JSONObject>() {
+        StringRequest request = new StringRequest(Request.Method.POST, sign_in_url, new Response.Listener<String>() {
             @Override
-            public void onResponse(JSONObject response) {
-                Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_LONG).show();
+            public void onResponse(String response) {
+                try {
+                    JSONObject jsonObject = new JSONObject(response);
+                    if (jsonObject.getInt("status") == 4) {
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Invalid Login Details", Toast.LENGTH_LONG).show();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
-
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Toast.makeText(getApplicationContext(), "error", Toast.LENGTH_LONG).show();
+                Log.e("VolleyError", error.toString());
                 error.printStackTrace();
             }
         }) {
@@ -68,6 +79,8 @@ public class LoginScreen extends AppCompatActivity {
                 return params;
             }
         };
+
+        //adding the request to the networkutil
         NetworkUtil.getInstance(getApplicationContext()).addToRequestQueue(request);
     }
 }
